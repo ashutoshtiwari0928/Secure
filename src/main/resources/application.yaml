@@ -1,0 +1,10 @@
+spring:
+  application:
+    name: Secure
+  datasource:
+    password: ${DB_PASSWORD}
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+  jpa:
+    hibernate:
+      ddl-auto: update
