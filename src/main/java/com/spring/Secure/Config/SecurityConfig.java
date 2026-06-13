@@ -10,7 +10,9 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.Customizer;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -20,24 +22,32 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import java.util.Collection;
 
 @Configuration
 public class SecurityConfig {
     private UserService userDetailsService;
+    private JwtFilter jwtFilter;
+    @Autowired
+    public void setJwtFilter(JwtFilter jwtFilter) {
+        this.jwtFilter = jwtFilter;
+    }
     @Autowired
     private void setUserDetailsService(UserService userDetailsService) {
         this.userDetailsService = userDetailsService;
     }
     @Bean
    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http.csrf(
-                csrf -> csrf.disable()
-        ).authorizeHttpRequests(
+        http
+                .csrf(AbstractHttpConfigurer::disable)
+                .authorizeHttpRequests(
                 authorize ->
                         authorize
-                                .requestMatchers(HttpMethod.POST, "/login",
+                                .requestMatchers(HttpMethod.GET, "/login")
+                                .permitAll()
+                                .requestMatchers(HttpMethod.POST,
                                         "/register")
                                 .permitAll()
                                 .requestMatchers(
@@ -52,7 +62,8 @@ public class SecurityConfig {
                         )
                 )
                 .httpBasic(Customizer.withDefaults())
-                .userDetailsService(userDetailsService);
+                .userDetailsService(userDetailsService)
+                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
     @Bean
@@ -66,6 +77,11 @@ public class SecurityConfig {
         );
         authenticationProvider.setPasswordEncoder(passwordEncoder());
         return authenticationProvider;
+    }
+
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) {
+        return config.getAuthenticationManager();
     }
 
 }
