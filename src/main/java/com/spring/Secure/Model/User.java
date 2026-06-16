@@ -3,6 +3,8 @@ package com.spring.Secure.Model;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -17,4 +19,6 @@ public class User {
     private String password;
     @NonNull
     private String role;
+    private String passwordResetToken;
+    private LocalDateTime passwordResetTokenExpiresAt;
 }

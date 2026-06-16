@@ -1,6 +1,7 @@
 package com.spring.Secure.Service;
 
 import com.spring.Secure.DTO.UserDTO;
+import com.spring.Secure.DTO.OAuthUserResult;
 import com.spring.Secure.Model.User;
 import com.spring.Secure.Model.UserDetailsImpl;
 import com.spring.Secure.Repo.UserRepo;
@@ -15,8 +16,10 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.UUID;
 @Service
 public class UserService implements UserDetailsService {
     private UserRepo userRepo;
@@ -34,6 +37,48 @@ public class UserService implements UserDetailsService {
         user.setPassword(Objects.requireNonNull(passwordEncoder.encode(user.getPassword())));
         userRepo.save(user);
     }
+
+    public OAuthUserResult findOrCreateOAuthUser(String username, String email) {
+        Optional<User> existingUser = userRepo.findById(username);
+        if (existingUser.isPresent()) {
+            return new OAuthUserResult(existingUser.get(), null);
+        }
+
+        String temporaryPassword = UUID.randomUUID().toString();
+        User user = new User();
+        user.setUsername(username);
+        user.setEmail(email);
+        user.setPassword(passwordEncoder.encode(temporaryPassword));
+        user.setRole("USER");
+        return new OAuthUserResult(userRepo.save(user), temporaryPassword);
+    }
+
+    public String createPasswordResetToken(String username) {
+        User user = userRepo.findById(username)
+                .orElseThrow(() -> new UsernameNotFoundException("Username not found"));
+
+        String token = UUID.randomUUID().toString();
+        user.setPasswordResetToken(token);
+        user.setPasswordResetTokenExpiresAt(LocalDateTime.now().plusMinutes(15));
+        userRepo.save(user);
+        return token;
+    }
+
+    public void resetPassword(String token, String newPassword) {
+        User user = userRepo.findByPasswordResetToken(token)
+                .orElseThrow(() -> new UsernameNotFoundException("Invalid password reset token"));
+
+        if (user.getPasswordResetTokenExpiresAt() == null
+                || user.getPasswordResetTokenExpiresAt().isBefore(LocalDateTime.now())) {
+            throw new UsernameNotFoundException("Password reset token has expired");
+        }
+
+        user.setPassword(passwordEncoder.encode(newPassword));
+        user.setPasswordResetToken(null);
+        user.setPasswordResetTokenExpiresAt(null);
+        userRepo.save(user);
+    }
+
     public UserDetails login(UserDTO userDto) throws UsernameNotFoundException {
         if(userDto==null){
             throw new UsernameNotFoundException("Invalid username or password");

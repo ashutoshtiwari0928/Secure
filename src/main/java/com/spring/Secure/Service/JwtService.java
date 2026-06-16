@@ -4,6 +4,7 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
@@ -21,6 +22,7 @@ public class JwtService {
     private void setUserService(UserService userService) {
         this.userService = userService;
     }
+
     public String generateToken(String username) {
         Map<String,Object> claims = new HashMap<>();
         return
@@ -38,6 +40,7 @@ public class JwtService {
         byte[] keyBytes = Decoders.BASE64.decode(
                 System.getenv("SECRETKEY")
         );
+
         return Keys.hmacShaKeyFor(keyBytes);
     }
 
@@ -50,9 +53,11 @@ public class JwtService {
     }
 
     private Claims extractAllClaims(String jwtToken) {
+        SecretKey key = getKey();
+
         return Jwts
                 .parser()
-                .verifyWith(getKey())
+                .verifyWith(key)
                 .build()
                 .parseSignedClaims(jwtToken)
                 .getPayload();

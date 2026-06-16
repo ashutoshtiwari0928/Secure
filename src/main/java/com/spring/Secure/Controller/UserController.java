@@ -1,4 +1,6 @@
 package com.spring.Secure.Controller;
+import com.spring.Secure.DTO.ForgotPasswordRequest;
+import com.spring.Secure.DTO.ResetPasswordRequest;
 import com.spring.Secure.DTO.UserDTO;
 import com.spring.Secure.Model.User;
 import com.spring.Secure.Service.JwtService;
@@ -33,7 +35,7 @@ public class UserController {
     public void setUserService(UserService userService) {
         this.userService = userService;
     }
-    @PostMapping("/register")
+    @PostMapping("/auth/register")
     public ResponseEntity<?> register(@RequestBody User user) {
         try {
             userService.register(user);
@@ -44,7 +46,7 @@ public class UserController {
         }
     }
 
-    @GetMapping("/login")
+    @GetMapping("/auth/login")
     public ResponseEntity<?> login(@RequestBody UserDTO userDto) {
         try {
             try {
@@ -64,6 +66,26 @@ public class UserController {
                 return new ResponseEntity<>(e.getMessage(), HttpStatus.UNAUTHORIZED);
             }
         }catch (UsernameNotFoundException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    @PostMapping("/auth/forgot-password")
+    public ResponseEntity<?> forgotPassword(@RequestBody ForgotPasswordRequest request) {
+        try {
+            String resetToken = userService.createPasswordResetToken(request.getUsername());
+            return new ResponseEntity<>(resetToken, HttpStatus.OK);
+        } catch (UsernameNotFoundException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
+        }
+    }
+
+    @PostMapping("/auth/reset-password")
+    public ResponseEntity<?> resetPassword(@RequestBody ResetPasswordRequest request) {
+        try {
+            userService.resetPassword(request.getToken(), request.getNewPassword());
+            return new ResponseEntity<>("Password reset successful", HttpStatus.OK);
+        } catch (UsernameNotFoundException e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
         }
     }
