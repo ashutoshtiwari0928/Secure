@@ -5,6 +5,7 @@ target/
 !**/src/test/**/target/
 start.bat
 compilejar.bat
+db.env
 .env
 ### STS ###
 .apt_generated
