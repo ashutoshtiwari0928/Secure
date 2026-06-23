@@ -26,3 +26,5 @@ spring:
             scope:
               - read:user
               - user:email
+server:
+  port: ${PORT}
