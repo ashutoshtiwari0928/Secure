@@ -1,4 +1,8 @@
+FROM maven:3 AS build
+WORKDIR /app
+COPY src ./src
+COPY pom.xml .
+RUN mvn clean package -DskipTests
 FROM openjdk:27-ea-jdk-oracle
-MAINTAINER "Ashutosh Tiwari"
-COPY target/secure.jar secure.jar
-CMD ["java","-jar","secure.jar"]
+COPY --from=build /app/target/*.jar secure.jar
+ENTRYPOINT ["java","-jar","secure.jar"]
