@@ -2,6 +2,7 @@ package com.spring.Secure.Controller;
 
 import com.spring.Secure.Model.DemoData;
 import com.spring.Secure.Repo.DemoDataRepo;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -11,6 +12,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/demo")
+@Tag(name = "Demo apis for testing db operations.")
 public class DemoDataController {
     private DemoDataRepo demoDataRepo;
     @Autowired
